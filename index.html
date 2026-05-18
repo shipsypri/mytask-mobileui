@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#1565c0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="My Tasks" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<title>My Tasks – K-INDEV Logistics</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #fff;
+    color: #1a2332;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+  }
+  #app {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 480px;
+    margin: 0 auto;
+    overflow: hidden;
+    background: #fff;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    transition: transform .32s cubic-bezier(.4,0,.2,1);
+    will-change: transform;
+  }
+  .screen.off-right { transform: translateX(100%); }
+  .screen.off-left  { transform: translateX(-30%); }
+
+  /* ───── Screen 1: My Tasks ───── */
+  .header {
+    flex-shrink: 0;
+    padding: 16px 18px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .refresh-btn {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; cursor: pointer;
+    color: #1a2332;
+  }
+
+  .scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 90px;
+  }
+
+  .title-row {
+    padding: 14px 22px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .page-title {
+    font-size: 30px;
+    font-weight: 800;
+    color: #1a2332;
+    letter-spacing: -0.3px;
+  }
+  .duty-pill {
+    background: #22c55e;
+    color: #fff;
+    border-radius: 22px;
+    padding: 8px 14px 8px 18px;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex; align-items: center;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(34,197,94,.25);
+    cursor: pointer;
+    user-select: none;
+  }
+  .duty-pill .knob {
+    width: 18px; height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .duty-pill.off { background: #d1d9e6; color: #4a5a72; flex-direction: row-reverse; padding: 8px 18px 8px 14px; }
+
+  .trip-card {
+    margin: 0 18px;
+    border: 1px solid #e2e7f0;
+    border-radius: 14px;
+    padding: 22px 22px 24px;
+    background: #fff;
+    box-shadow: 0 1px 0 rgba(0,0,0,.02);
+  }
+  .trip-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .trip-id {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1a2332;
+    display: flex; align-items: center; gap: 8px;
+    letter-spacing: -0.2px;
+  }
+  .trip-id svg { color: #6b7c99; }
+  .assigned-badge {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #4a5a72;
+    letter-spacing: 0.6px;
+  }
+  .assigned-dot {
+    width: 10px; height: 10px;
+    background: #6b7c99;
+    border-radius: 50%;
+  }
+  .created-time {
+    color: #8a9ab5;
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: 6px;
+  }
+  .stats {
+    margin-top: 18px;
+    background: #fefaee;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    padding: 18px 0;
+  }
+  .stat {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .stat-num { font-size: 28px; font-weight: 800; color: #1a2332; letter-spacing: -0.5px; }
+  .stat-label { font-size: 17px; color: #8a9ab5; font-weight: 600; }
+  .stat-divider { width: 1px; height: 36px; background: #e2e7f0; }
+
+  .view-trip-btn {
+    margin-top: 22px;
+    width: 100%;
+    background: #1565c0;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 18px 0;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 14px rgba(21,101,192,.25);
+    transition: transform .1s, background .15s;
+  }
+  .view-trip-btn:active { transform: scale(.98); background: #0d4ea0; }
+
+  .menu-list {
+    margin: 22px 0 0;
+    padding: 0 22px;
+  }
+  .menu-item {
+    display: flex; align-items: center; gap: 16px;
+    padding: 22px 0;
+    border-bottom: 1px solid #ebeff5;
+    cursor: pointer;
+  }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-icon {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    color: #1a2332;
+    flex-shrink: 0;
+  }
+  .menu-text {
+    flex: 1;
+    font-size: 19px;
+    font-weight: 700;
+    color: #1a2332;
+  }
+  .menu-chev { color: #b0baca; }
+  .menu-item:active { background: #f7f9fc; }
+
+  /* ───── Bottom Tab Nav ───── */
+  .tabbar {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 78px;
+    background: #fff;
+    border-top: 1px solid #ebeff5;
+    display: flex;
+    align-items: stretch;
+    padding: 8px 0 14px;
+    z-index: 5;
+  }
+  .tab {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px;
+    color: #8a9ab5;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+  }
+  .tab.active { color: #1565c0; }
+  .tab-icon-wrap {
+    display: flex; align-items: center; justify-content: center;
+    width: 64px; height: 32px;
+    border-radius: 16px;
+    transition: background .15s;
+  }
+  .tab.active .tab-icon-wrap {
+    background: #ece6f9;
+  }
+
+  /* ───── Screen 2: Preview ───── */
+  .preview-header {
+    flex-shrink: 0;
+    padding: 18px 18px 14px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .back-btn {
+    background: transparent; border: none; cursor: pointer;
+    padding: 4px;
+    display: flex; align-items: center; justify-content: center;
+    color: #1a2332;
+  }
+  .back-btn:active { opacity: 0.5; }
+  .preview-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a2332;
+    flex: 1;
+    letter-spacing: -0.2px;
+  }
+  .breaks-only {
+    color: #1565c0;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .breaks-only.active { color: #0d4ea0; text-decoration: underline; }
+
+  .timeline {
+    padding: 8px 16px 24px;
+  }
+  .stop-row {
+    display: flex;
+    gap: 12px;
+    position: relative;
+  }
+  .seq-col {
+    width: 28px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 22px;
+  }
+  .seq-num {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a2332;
+    line-height: 1;
+  }
+  .seq-home {
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    color: #1565c0;
+  }
+  .seq-line {
+    flex: 1;
+    width: 3px;
+    background: #1565c0;
+    border-radius: 2px;
+    margin-top: 6px;
+    min-height: 28px;
+  }
+  .stop-card {
+    flex: 1;
+    border: 1.5px solid #d1d9e6;
+    border-radius: 10px;
+    padding: 16px 16px 14px;
+    margin: 14px 0 14px 4px;
+    background: #fff;
+  }
+  .stop-row.depot .seq-col { padding-top: 4px; }
+  .stop-row.depot .stop-card { display: none; }
+  .stop-row.depot .seq-line { margin-top: 4px; min-height: 26px; }
+
+  .stop-address {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2332;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .stop-meta {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px 22px;
+  }
+  .stop-meta-item {
+    display: flex; align-items: center;
+    gap: 8px;
+    color: #8a9ab5;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .stop-meta-item svg { color: #1565c0; flex-shrink: 0; }
+
+  /* EV-charge break row uses an accent treatment */
+  .stop-row.ev .stop-card {
+    border-color: #86efac;
+    background: #f0fdf4;
+  }
+  .stop-row.ev .seq-line { background: #22c55e; }
+  .stop-row.ev .seq-num { color: #15803d; font-weight: 700; }
+  .stop-row.ev .stop-address { color: #15803d; font-weight: 600; }
+  .stop-row.ev .stop-meta-item svg { color: #22c55e; }
+  .ev-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #dcfce7; color: #15803d;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    margin-bottom: 8px;
+  }
+
+  /* footer buttons */
+  .footer {
+    flex-shrink: 0;
+    border-top: 1px solid #ebeff5;
+    padding: 16px 18px calc(16px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    gap: 14px;
+    background: #fff;
+  }
+  .btn-secondary, .btn-primary {
+    flex: 1;
+    height: 52px;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform .1s, opacity .15s;
+  }
+  .btn-secondary {
+    background: #fff;
+    color: #1565c0;
+    border: 1.5px solid #1565c0;
+  }
+  .btn-primary {
+    background: #1565c0;
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 14px rgba(21,101,192,.25);
+  }
+  .btn-secondary:active, .btn-primary:active { transform: scale(.98); }
+
+  /* installer banner */
+  .install-banner {
+    position: absolute;
+    left: 12px; right: 12px;
+    bottom: 90px;
+    background: #1a2332;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    z-index: 20;
+    font-size: 13px;
+  }
+  .install-banner.show { display: flex; }
+  .install-banner button {
+    background: #1565c0; color: #fff; border: none;
+    border-radius: 6px; padding: 8px 14px;
+    font-weight: 600; font-size: 13px;
+    font-family: inherit; cursor: pointer;
+  }
+  .install-banner .close {
+    background: transparent; padding: 4px 6px; font-size: 18px;
+  }
+
+  /* hide scrollbar */
+  .scroll::-webkit-scrollbar { width: 0; }
+  .scroll { scrollbar-width: none; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ════════ SCREEN 1: MY TASKS ════════ -->
+  <div class="screen" id="screen-tasks">
+    <div class="header">
+      <button class="refresh-btn" aria-label="Refresh" onclick="this.firstElementChild.style.transition='transform .6s';this.firstElementChild.style.transform='rotate(360deg)';setTimeout(()=>{this.firstElementChild.style.transition='none';this.firstElementChild.style.transform='rotate(0)'},650)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="transform-origin:center"><path d="M21 12a9 9 0 1 1-3-6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M21 4v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="scroll">
+      <div class="title-row">
+        <div class="page-title">My Tasks</div>
+        <div class="duty-pill" id="dutyPill" onclick="toggleDuty()">
+          <span id="dutyLabel">On Duty</span>
+          <div class="knob"></div>
+        </div>
+      </div>
+
+      <div class="trip-card">
+        <div class="trip-top">
+          <div class="trip-id">
+            <span id="tripIdText">NEW_JERSEY_HUB000020</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="13" height="18" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M11 17h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <div class="assigned-badge">
+            <span class="assigned-dot"></span>
+            <span>ASSIGNED</span>
+          </div>
+        </div>
+        <div class="created-time" id="createdText">Created 11:18AM</div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-num" id="deliveriesCount">13</div>
+            <div class="stat-label">Deliveries</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <div class="stat-num">0</div>
+            <div class="stat-label">Pickups</div>
+          </div>
+        </div>
+
+        <button class="view-trip-btn" onclick="showScreen('preview')">VIEW TRIP</button>
+      </div>
+
+      <div class="menu-list">
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 3h7l5 5v13H7z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><text x="12" y="17" font-size="6" font-weight="700" text-anchor="middle" fill="currentColor" font-family="DM Sans">D</text></svg>
+          </div>
+          <div class="menu-text">Prepare DRS</div>
+          <svg class="menu-chev" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 7.5L12 12l8-4.5M12 12v9" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="18" cy="6" r="3" fill="#fff" stroke="currentColor" stroke-width="1.6"/><path d="M18 4.5v3M16.5 6h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <div class="menu-text">Add Delivery Consignments</div>
+          <svg class="menu-chev" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="14" height="14" rx="1.5" stroke="currentColor" stroke-width="1.6"/><line x1="6.5" y1="9" x2="13.5" y2="9" stroke="currentColor" stroke-width="1.4"/><line x1="6.5" y1="12" x2="13.5" y2="12" stroke="currentColor" stroke-width="1.4"/><line x1="6.5" y1="15" x2="11" y2="15" stroke="currentColor" stroke-width="1.4"/><path d="M16 11c2 0 4 1 4 3v3a2 2 0 0 1-2 2h-2" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+          </div>
+          <div class="menu-text">Consignment Loading</div>
+          <svg class="menu-chev" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1v-9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="menu-text">Adhoc Pickup</div>
+          <svg class="menu-chev" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 3h7l5 5v13H7z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><text x="12" y="17" font-size="6" font-weight="700" text-anchor="middle" fill="currentColor" font-family="DM Sans">P</text></svg>
+          </div>
+          <div class="menu-text">Prepare PRS</div>
+          <svg class="menu-chev" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><rect x="7" y="8" width="10" height="8" stroke="currentColor" stroke-width="1.6" rx="1"/></svg>
+          </div>
+          <div class="menu-text">CN Inscan</div>
+          <svg class="menu-chev" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="14" height="14" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M7 9h7M7 13h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="18" cy="15" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M20 17l2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <div class="menu-text">Task List / Trip</div>
+          <svg class="menu-chev" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <div class="tab" onclick="alert('Overview tab')">
+        <div class="tab-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3v9l8 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
+        </div>
+        <span>Overview</span>
+      </div>
+      <div class="tab active">
+        <div class="tab-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#1565c0"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5zm0 2.2l6.5 3.6L12 11.5 5.5 7.8 12 4.2zM5 9.4l6 3.4v6.6l-6-3.4V9.4zm14 0v6.6l-6 3.4v-6.6l6-3.4z"/></svg>
+        </div>
+        <span>My Tasks</span>
+      </div>
+      <div class="tab" onclick="alert('More tab')">
+        <div class="tab-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+        </div>
+        <span>More</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ SCREEN 2: PREVIEW ════════ -->
+  <div class="screen off-right" id="screen-preview">
+    <div class="preview-header">
+      <button class="back-btn" onclick="showScreen('tasks')" aria-label="Back">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="preview-title">Preview</div>
+      <div class="breaks-only" id="breaksToggle" onclick="toggleBreaksOnly()">Show breaks only</div>
+    </div>
+
+    <div class="scroll" id="timelineScroll">
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+    <div class="footer">
+      <button class="btn-secondary" onclick="showScreen('tasks')">EDIT BREAKS</button>
+      <button class="btn-primary" onclick="alert('Proceeding to next step…')">NEXT</button>
+    </div>
+  </div>
+
+  <!-- Install banner -->
+  <div class="install-banner" id="installBanner">
+    <div style="flex:1">Install K-INDEV on your home screen for app-like access.</div>
+    <button id="installBtn">Install</button>
+    <button class="close" onclick="document.getElementById('installBanner').classList.remove('show')">×</button>
+  </div>
+</div>
+
+<script>
+/* ────────────────────────────────────────────
+   DATA — sourced from the supplied
+   trip_manager_details.html (consignments[])
+   ──────────────────────────────────────────── */
+const TRIP = {
+  id: 'NEW_JERSEY_HUB000020',
+  driver: 'NJ_DRIVER4',
+  hubAddress: 'NEW JERSEY HUB — Newark, NJ 07102, United States',
+  created: '11:18AM'
+};
+
+/* Stops mirror the consignments[] array from the source HTML.
+   `offset` = minutes from "now" (local time on the device).
+   ETA is computed at render time. Intervals match the original timing
+   pattern: ~12 min between same-cluster stops, ~20-25 min for EV
+   charging, ~30-45 min for inter-cluster drives. */
+const STOPS = [
+  // depot start
+  { type:'home', offset:0,   address: TRIP.hubAddress, slot:'09:00 - 21:00' },
+
+  { type:'stop', n:1,  offset:30,  address:'36-01 35th Ave, Queens, NY 11106, United States, Long Island City, New York – 11106', slot:'09:00 - 21:00' },
+  { type:'stop', n:2,  offset:42,  address:'36-01 35th Ave, Queens, NY 11106, United States, Long Island City, New York – 11106', slot:'09:00 - 21:00' },
+  { type:'stop', n:3,  offset:54,  address:'36-01 35th Ave, Queens, NY 11106, United States, Long Island City, New York – 11106', slot:'09:00 - 21:00' },
+
+  // EV BREAK 1
+  { type:'ev',   n:4,  offset:70,  address:'Queens EV Station — 58-01 Queens Blvd, Woodside, NY 11377', slot:'Charge 20 min · target 80%' },
+
+  { type:'stop', n:5,  offset:90,  address:'52-19 Flushing Ave, Maspeth, NY 11378, United States, Maspeth, New York – 11378', slot:'09:00 - 21:00' },
+  { type:'stop', n:6,  offset:102, address:'52-19 Flushing Ave, Maspeth, NY 11378, United States, Maspeth, New York – 11378', slot:'09:00 - 21:00' },
+  { type:'stop', n:7,  offset:114, address:'52-19 Flushing Ave, Maspeth, NY 11378, United States, Maspeth, New York – 11378', slot:'09:00 - 21:00' },
+  { type:'stop', n:8,  offset:126, address:'52-19 Flushing Ave, Maspeth, NY 11378, United States, Maspeth, New York – 11378', slot:'09:00 - 21:00' },
+
+  // EV BREAK 2
+  { type:'ev',   n:9,  offset:145, address:'Maspeth Fast Charge — 55-02 Laurel Hill Blvd, Maspeth, NY 11378', slot:'Charge 25 min · target 90%' },
+
+  { type:'stop', n:10, offset:180, address:'234 Flatbush Ave, Brooklyn, NY 11217, United States, Brooklyn, New York – 11217', slot:'10:00 - 22:00' },
+  { type:'stop', n:11, offset:192, address:'234 Flatbush Ave, Brooklyn, NY 11217, United States, Brooklyn, New York – 11217', slot:'10:00 - 22:00' },
+  { type:'stop', n:12, offset:204, address:'234 Flatbush Ave, Brooklyn, NY 11217, United States, Brooklyn, New York – 11217', slot:'10:00 - 22:00' },
+
+  { type:'stop', n:13, offset:235, address:'100 Christopher Columbus Dr, Jersey City, NJ 07302, United States, Jersey City, New Jersey – 07302', slot:'08:00 - 20:00' },
+  { type:'stop', n:14, offset:247, address:'100 Christopher Columbus Dr, Jersey City, NJ 07302, United States, Jersey City, New Jersey – 07302', slot:'08:00 - 20:00' },
+  { type:'stop', n:15, offset:259, address:'100 Christopher Columbus Dr, Jersey City, NJ 07302, United States, Jersey City, New Jersey – 07302', slot:'08:00 - 20:00' },
+];
+
+/* Pad to 2 digits */
+const pad = n => String(n).padStart(2, '0');
+
+/* Format a Date as HH:MM (24-hr, device-local) */
+function fmtTime(d) {
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* Format a Date as h:MMAM/PM (for "Created" label) */
+function fmtAmPm(d) {
+  let h = d.getHours();
+  const m = pad(d.getMinutes());
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  return `${h}:${m}${ampm}`;
+}
+
+/* Compute ETA for a stop based on the current time at render */
+function etaFor(stop, baseDate) {
+  const t = new Date(baseDate.getTime() + stop.offset * 60000);
+  return fmtTime(t);
+}
+
+/* Render timeline — recomputes ETAs from the current local time */
+function renderTimeline(filter) {
+  const tl = document.getElementById('timeline');
+  const now = new Date();
+  now.setSeconds(0);
+  now.setMilliseconds(0);
+  const list = (filter === 'breaks') ? STOPS.filter(s => s.type === 'ev') : STOPS;
+  tl.innerHTML = list.map(s => {
+    const eta = etaFor(s, now);
+    if (s.type === 'home') {
+      return `
+        <div class="stop-row depot">
+          <div class="seq-col">
+            <div class="seq-home">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M3 11l9-8 9 8" stroke="#1565c0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 10v10h14V10" stroke="#1565c0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="seq-line"></div>
+          </div>
+          <div class="stop-card"></div>
+        </div>`;
+    }
+    const isEV = s.type === 'ev';
+    return `
+      <div class="stop-row ${isEV?'ev':''}">
+        <div class="seq-col">
+          <div class="seq-num">${s.n}</div>
+          <div class="seq-line"></div>
+        </div>
+        <div class="stop-card">
+          ${isEV ? '<span class="ev-tag">⚡ EV CHARGE STOP</span>' : ''}
+          <div class="stop-address">${s.address}</div>
+          <div class="stop-meta">
+            <div class="stop-meta-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>ETA: ${eta}</span>
+            </div>
+            <div class="stop-meta-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>TimeSlot: ${s.slot}</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+renderTimeline('all');
+
+/* Update count to match data */
+document.getElementById('deliveriesCount').textContent =
+  STOPS.filter(s => s.type === 'stop').length;
+
+/* Set "Created" label to current local time */
+document.getElementById('createdText').textContent =
+  'Created ' + fmtAmPm(new Date());
+
+/* Screen navigation */
+function showScreen(name) {
+  const tasks = document.getElementById('screen-tasks');
+  const preview = document.getElementById('screen-preview');
+  if (name === 'preview') {
+    // re-render so ETAs are fresh each time the user opens the preview
+    renderTimeline(breaksOnly ? 'breaks' : 'all');
+    tasks.classList.add('off-left');
+    preview.classList.remove('off-right');
+    document.getElementById('timelineScroll').scrollTop = 0;
+  } else {
+    tasks.classList.remove('off-left');
+    preview.classList.add('off-right');
+  }
+}
+
+/* Breaks-only filter */
+let breaksOnly = false;
+function toggleBreaksOnly() {
+  breaksOnly = !breaksOnly;
+  const link = document.getElementById('breaksToggle');
+  link.textContent = breaksOnly ? 'Show all stops' : 'Show breaks only';
+  link.classList.toggle('active', breaksOnly);
+  renderTimeline(breaksOnly ? 'breaks' : 'all');
+}
+
+/* On-duty toggle */
+let onDuty = true;
+function toggleDuty() {
+  onDuty = !onDuty;
+  const pill = document.getElementById('dutyPill');
+  document.getElementById('dutyLabel').textContent = onDuty ? 'On Duty' : 'Off Duty';
+  pill.classList.toggle('off', !onDuty);
+}
+
+/* PWA install hook */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBanner').classList.remove('show');
+});
+
+/* Service worker for offline / installability.
+   Auto-reloads the page when a new SW takes over so users
+   get fresh UI without manual cache clears. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      reg.update();
+      // If a new SW is waiting, activate it immediately
+      if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            nw.postMessage('SKIP_WAITING');
+          }
+        });
+      });
+    }).catch(()=>{});
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
+  });
+}
+</script>
+
+</body>
+</html>
