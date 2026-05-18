@@ -1,4 +1,4 @@
-# K-INDEV Logistics — My Tasks (PWA)
+#  My Tasks (PWA)
 
 Mobile-friendly driver task app. Two screens:
 1. **My Tasks** — trip card with delivery / pickup counts and quick actions.
